@@ -1,214 +1,268 @@
 (function () {
   'use strict';
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     THEME — persist across pages via localStorage
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const toggleBtn = document.getElementById('theme-toggle');
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', (e) => {
-      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-      document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
-      localStorage.setItem('theme', isLight ? 'dark' : 'light');
-      triggerBurst(e.clientX, e.clientY);
-    });
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function accentRGB() {
+    return document.documentElement.getAttribute('data-theme') === 'light'
+      ? '45, 82, 209'
+      : '107, 142, 255';
   }
 
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     CLOCK
+     THEME · persist + toggle
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const clockEl = document.getElementById('clock');
-  function tickClock() {
-    if (!clockEl) return;
-    const d = new Date();
-    clockEl.textContent =
-      String(d.getHours()).padStart(2, '0') + ':' +
-      String(d.getMinutes()).padStart(2, '0');
-  }
-  tickClock();
-  setInterval(tickClock, 30000);
+  const stored = localStorage.getItem('mdtheme');
+  if (stored === 'light') document.documentElement.setAttribute('data-theme', 'light');
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     NEON TRACER CURSOR (lerp via RAF)
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const tracer = document.getElementById('neon-tracer');
-  let mX = -200, mY = -200, tX = -200, tY = -200;
-
-  document.addEventListener('mousemove', (e) => { mX = e.clientX; mY = e.clientY; });
-  document.addEventListener('mouseleave', () => { mX = -200; mY = -200; });
-
-  const interactors = 'a, button, .skill-tag, .role-item, .entry-row, .topo-node, .contact-btn';
-  document.querySelectorAll(interactors).forEach((el) => {
-    el.addEventListener('mouseenter', () => tracer && tracer.classList.add('expanded'));
-    el.addEventListener('mouseleave', () => tracer && tracer.classList.remove('expanded'));
-  });
-
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     MATRIX DATA BURST
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const BCHARS = '01ABCDEF!@#$%/\\|<>{}[]?;:~`*^';
-
-  function triggerBurst(cx, cy) {
-    const frag = document.createDocumentFragment();
-    for (let i = 0; i < 20; i++) {
-      const el = document.createElement('span');
-      el.className = 'burst-p';
-      el.textContent = BCHARS[Math.floor(Math.random() * BCHARS.length)];
-      const angle = (Math.PI * 2 * i / 20) + (Math.random() - 0.5) * 0.5;
-      const spd   = 50 + Math.random() * 100;
-      el.style.cssText =
-        'left:' + cx + 'px;top:' + cy + 'px;' +
-        '--dx:' + (Math.cos(angle) * spd) + 'px;' +
-        '--dy:' + (Math.sin(angle) * spd) + 'px;' +
-        'animation-delay:' + (Math.random() * 0.06) + 's;';
-      el.addEventListener('animationend', () => el.remove(), { once: true });
-      frag.appendChild(el);
-    }
-    document.body.appendChild(frag);
-  }
-
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     HOMEPAGE — TOPOLOGY
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const topoWrap = document.getElementById('topo-wrap');
-
-  if (topoWrap) {
-
-    /* ── Typewriter: "Methindu Damsara" then "· Matt ·" ── */
-    const mainEl = document.getElementById('type-main');
-    const prefEl = document.getElementById('type-pref');
-    const MAIN   = 'Methindu Damsara';
-    const PREF   = '· Matt ·';
-
-    function typeSequence() {
-      let i = 0;
-      function typeMain() {
-        if (i <= MAIN.length) {
-          mainEl.textContent = MAIN.slice(0, i);
-          i++;
-          setTimeout(typeMain, 55);
-        } else {
-          setTimeout(typePref, 320);
-        }
-      }
-      let j = 0;
-      function typePref() {
-        if (j <= PREF.length) {
-          prefEl.textContent = PREF.slice(0, j);
-          j++;
-          setTimeout(typePref, 75);
-        }
-      }
-      typeMain();
-    }
-    typeSequence();
-
-    /* ── SVG topology lines ── */
-    const svg    = document.getElementById('topo-svg');
-    const hub    = document.getElementById('topo-hub');
-    const nodes  = document.querySelectorAll('.topo-node');
-    const lines  = [];
-
-    function drawLines() {
-      if (!svg || !hub || !nodes.length) return;
-      svg.innerHTML = '';
-
-      const wRect = topoWrap.getBoundingClientRect();
-      const hRect = hub.getBoundingClientRect();
-      const hcx   = hRect.left - wRect.left + hRect.width  / 2;
-      const hcy   = hRect.top  - wRect.top  + hRect.height / 2;
-
-      svg.setAttribute('viewBox', '0 0 ' + wRect.width + ' ' + wRect.height);
-      lines.length = 0;
-
-      nodes.forEach((node) => {
-        const nRect = node.getBoundingClientRect();
-        const nx    = nRect.left - wRect.left + nRect.width  / 2;
-        const ny    = nRect.top  - wRect.top  + nRect.height / 2;
-
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', hcx);
-        line.setAttribute('y1', hcy);
-        line.setAttribute('x2', nx);
-        line.setAttribute('y2', ny);
-        line.setAttribute('class', 'topo-line');
-        svg.appendChild(line);
-        lines.push({ el: line, node });
-      });
-    }
-
-    /* Highlight line on node hover */
-    nodes.forEach((node, idx) => {
-      node.addEventListener('mouseenter', () => {
-        if (lines[idx]) lines[idx].el.classList.add('lit');
-      });
-      node.addEventListener('mouseleave', () => {
-        if (lines[idx]) lines[idx].el.classList.remove('lit');
-      });
+  function applyThemeLabel() {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    document.querySelectorAll('[data-theme-label]').forEach((el) => {
+      el.textContent = isLight ? 'LIGHT' : 'DARK';
     });
-
-    /* Node click: burst then navigate */
-    nodes.forEach((node) => {
-      node.addEventListener('click', (e) => {
-        e.preventDefault();
-        const href = node.getAttribute('href');
-        triggerBurst(e.clientX, e.clientY);
-        setTimeout(() => { window.location.href = href; }, 360);
-      });
-    });
-
-    /* Draw lines after layout settles, redraw on resize */
-    requestAnimationFrame(() => {
-      requestAnimationFrame(drawLines);
-    });
-    window.addEventListener('resize', drawLines);
   }
+  applyThemeLabel();
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     WORK PAGE — entry expand/collapse
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  document.querySelectorAll('.entry').forEach((entry) => {
-    const btn = entry.querySelector('.entry-row');
-    if (!btn) return;
+  document.querySelectorAll('.theme-toggle').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const open = entry.dataset.open === 'true';
-      entry.dataset.open = open ? 'false' : 'true';
-      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const next = isLight ? 'dark' : 'light';
+      if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      else                  document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('mdtheme', next);
+      applyThemeLabel();
     });
   });
 
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     WORK PAGE — tab filter
+     TEXT DECRYPTION · 3x slower scramble on hover/focus
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  document.querySelectorAll('.f-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.f-tab').forEach((t) => {
-        t.classList.remove('active');
-        t.setAttribute('aria-selected', 'false');
-      });
-      tab.classList.add('active');
-      tab.setAttribute('aria-selected', 'true');
+  const SCRAMBLE_CHARS = '!<>-_\\/[]{}=+*^?#$%&¥§Ω∆◊';
 
-      const filter = tab.dataset.filter;
-      document.querySelectorAll('.entry').forEach((entry) => {
-        entry.dataset.hidden =
-          (filter === 'all' || entry.dataset.type === filter) ? 'false' : 'true';
-      });
-    });
-  });
+  function scramble(el) {
+    if (!el || reduceMotion) return;
+    if (!el.dataset.decryptText) el.dataset.decryptText = el.textContent;
+    const original = el.dataset.decryptText;
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     RAF LOOP — neon tracer lerp
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  function loop() {
-    if (tracer) {
-      tX += (mX - tX) * 0.13;
-      tY += (mY - tY) * 0.13;
-      tracer.style.left = tX + 'px';
-      tracer.style.top  = tY + 'px';
+    if (el._scrambleRAF) cancelAnimationFrame(el._scrambleRAF);
+
+    const queue = [];
+    for (let i = 0; i < original.length; i++) {
+      const ch = original[i];
+      const start = Math.floor(Math.random() * 8) * 3;
+      const end = start + (6 + Math.floor(Math.random() * 12)) * 3;
+      queue.push({ ch, start, end, current: '' });
     }
-    requestAnimationFrame(loop);
+
+    let frame = 0;
+    function update() {
+      let out = '';
+      let done = 0;
+      for (let i = 0; i < queue.length; i++) {
+        const q = queue[i];
+        if (frame >= q.end) {
+          out += q.ch;
+          done++;
+        } else if (frame >= q.start && q.ch !== ' ') {
+          if (!q.current || Math.random() < 0.18) {
+            q.current = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+          }
+          out += '<span class="decrypt-char">' + q.current + '</span>';
+        } else {
+          out += q.ch === ' ' ? ' ' : q.ch;
+        }
+      }
+      el.innerHTML = out;
+      if (done < queue.length) {
+        frame++;
+        el._scrambleRAF = requestAnimationFrame(update);
+      } else {
+        el.textContent = original;
+        el._scrambleRAF = null;
+      }
+    }
+    update();
   }
-  requestAnimationFrame(loop);
+
+  function bindDecrypt(host) {
+    const target = host.querySelector('.decrypt-text') || host;
+    if (!target.dataset.decryptText) target.dataset.decryptText = target.textContent;
+    host.addEventListener('mouseenter', () => scramble(target));
+    host.addEventListener('focus',      () => scramble(target));
+  }
+
+  document.querySelectorAll('.decrypt').forEach(bindDecrypt);
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     BACKGROUND · subtle node network canvas (slightly more visible)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  const bgCanvas = document.getElementById('bgCanvas');
+  if (bgCanvas && !reduceMotion) {
+    const ctx = bgCanvas.getContext('2d');
+    let W = 0, H = 0, nodes = [];
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      bgCanvas.width  = W * dpr;
+      bgCanvas.height = H * dpr;
+      bgCanvas.style.width  = W + 'px';
+      bgCanvas.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const count = Math.max(28, Math.min(58, Math.floor((W * H) / 32000)));
+      nodes = [];
+      for (let i = 0; i < count; i++) {
+        nodes.push({
+          x:  Math.random() * W,
+          y:  Math.random() * H,
+          vx: (Math.random() - 0.5) * 0.18,
+          vy: (Math.random() - 0.5) * 0.18,
+        });
+      }
+    }
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    const LINK_DIST = 200;
+
+    function frame() {
+      ctx.clearRect(0, 0, W, H);
+      const col = accentRGB();
+
+      for (const n of nodes) {
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < 0 || n.x > W) n.vx *= -1;
+        if (n.y < 0 || n.y > H) n.vy *= -1;
+      }
+
+      ctx.lineWidth = 1;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const d  = Math.sqrt(dx * dx + dy * dy);
+          if (d < LINK_DIST) {
+            const a = (1 - d / LINK_DIST) * 0.24;
+            ctx.strokeStyle = 'rgba(' + col + ', ' + a.toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      ctx.fillStyle = 'rgba(' + col + ', 0.72)';
+      for (const n of nodes) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     MOUSE DATA TRAIL · segmented digital particles
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  const trailCanvas = document.getElementById('trailCanvas');
+  if (trailCanvas && !reduceMotion) {
+    const tctx = trailCanvas.getContext('2d');
+    let TW = 0, TH = 0;
+    let tdpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function tresize() {
+      tdpr = Math.min(window.devicePixelRatio || 1, 2);
+      TW = window.innerWidth;
+      TH = window.innerHeight;
+      trailCanvas.width  = TW * tdpr;
+      trailCanvas.height = TH * tdpr;
+      trailCanvas.style.width  = TW + 'px';
+      trailCanvas.style.height = TH + 'px';
+      tctx.setTransform(tdpr, 0, 0, tdpr, 0, 0);
+    }
+    tresize();
+    window.addEventListener('resize', tresize, { passive: true });
+
+    const trail = [];
+    const particles = [];
+    const MAX_TRAIL = 18;
+    const MAX_PARTICLES = 90;
+
+    let lastX = -1000, lastY = -1000;
+    let hasMouse = false;
+
+    window.addEventListener('mousemove', (e) => {
+      const x = e.clientX, y = e.clientY;
+      if (!hasMouse) { lastX = x; lastY = y; hasMouse = true; return; }
+      const dx = x - lastX, dy = y - lastY;
+      const d = Math.hypot(dx, dy);
+      if (d < 2) return;
+      lastX = x; lastY = y;
+
+      trail.push({ x, y, life: 1 });
+      if (trail.length > MAX_TRAIL) trail.shift();
+
+      const count = Math.min(2, Math.max(1, Math.floor(d / 16)));
+      for (let i = 0; i < count; i++) {
+        if (particles.length >= MAX_PARTICLES) particles.shift();
+        particles.push({
+          x: x + (Math.random() - 0.5) * 5,
+          y: y + (Math.random() - 0.5) * 5,
+          vx: (Math.random() - 0.5) * 0.35,
+          vy: (Math.random() - 0.5) * 0.35 + 0.04,
+          size: Math.random() < 0.22 ? 2 : 1,
+          life: 1,
+          decay: 0.022 + Math.random() * 0.022,
+        });
+      }
+    }, { passive: true });
+
+    window.addEventListener('mouseleave', () => { hasMouse = false; });
+
+    function tframe() {
+      tctx.clearRect(0, 0, TW, TH);
+      const col = accentRGB();
+
+      if (trail.length > 1) {
+        tctx.lineWidth = 1;
+        for (let i = 1; i < trail.length; i++) {
+          const a = trail[i].life * 0.32;
+          tctx.strokeStyle = 'rgba(' + col + ', ' + a.toFixed(3) + ')';
+          tctx.beginPath();
+          tctx.moveTo(trail[i - 1].x, trail[i - 1].y);
+          tctx.lineTo(trail[i].x, trail[i].y);
+          tctx.stroke();
+        }
+      }
+      for (let i = trail.length - 1; i >= 0; i--) {
+        trail[i].life -= 0.07;
+        if (trail[i].life <= 0) trail.splice(i, 1);
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy;
+        p.life -= p.decay;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        const a = Math.max(0, p.life * 0.78);
+        tctx.fillStyle = 'rgba(' + col + ', ' + a.toFixed(3) + ')';
+        tctx.fillRect(p.x | 0, p.y | 0, p.size, p.size);
+      }
+
+      if (hasMouse) {
+        tctx.fillStyle = 'rgba(' + col + ', 0.92)';
+        tctx.fillRect(lastX - 1.5, lastY - 1.5, 3, 3);
+      }
+
+      requestAnimationFrame(tframe);
+    }
+    requestAnimationFrame(tframe);
+  }
 
 })();

@@ -3,89 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Methindu Damsara</title>
-  <meta name="description" content="Portfolio of Methindu Damsara — Networking and Cybersecurity Student, Auckland NZ." />
-  <!-- Prevent theme flash -->
-  <script>if(localStorage.getItem('theme')==='light')document.documentElement.setAttribute('data-theme','light');</script>
+  <title>Methindu Damsara · Cyber Security / Networking</title>
+  <meta name="description" content="Portfolio of Methindu Damsara (Matt). Cyber Security and Networking student based in Auckland, NZ." />
+  <script>if(localStorage.getItem('mdtheme')==='light')document.documentElement.setAttribute('data-theme','light');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="page-home">
+<body class="is-home">
 
-  <div class="grain" aria-hidden="true"></div>
-  <div id="neon-tracer" aria-hidden="true"></div>
+  <canvas id="bgCanvas" aria-hidden="true"></canvas>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-noise" aria-hidden="true"></div>
+  <canvas id="trailCanvas" aria-hidden="true"></canvas>
 
-  <!-- Top-right: clock + theme toggle -->
-  <div id="home-topbar">
-    <span class="home-clock" id="clock">--:--</span>
-    <button id="theme-toggle" aria-label="Toggle light/dark mode">◐</button>
-  </div>
+  <header class="topbar" role="banner">
+    <a href="index.html" class="topbar-mark"><span class="dot" aria-hidden="true"></span>METHINDU<span class="mark-meta"> · NODE 00</span></a>
+    <button class="theme-toggle decrypt" aria-label="Toggle light or dark theme">
+      <span class="tt-icon" aria-hidden="true"></span>
+      <span class="decrypt-text" data-theme-label>DARK</span>
+    </button>
+  </header>
 
-  <!-- Portfolio Topology -->
-  <div id="topo-wrap">
+  <main class="hero page-enter">
 
-    <!-- SVG lines layer (drawn by JS) -->
-    <svg id="topo-svg" aria-hidden="true"></svg>
+    <span class="hero-corner tl">
+      <span class="marker" aria-hidden="true"></span>
+      <span><span class="ci">MD / 01</span> · <span class="cv">Cyber Security</span></span>
+    </span>
+    <span class="hero-corner tr">
+      <span class="marker" aria-hidden="true"></span>
+      <span><span class="ci">LOC / 02</span> · <span class="cv">Auckland · NZ</span></span>
+    </span>
 
-    <!-- Central identity hub -->
-    <div id="topo-hub">
-      <span class="hub-name-main" id="type-main" aria-label="Methindu Damsara"></span>
-      <span class="hub-name-pref" id="type-pref" aria-label="Matt"></span>
-      <p class="hub-role">Networking and Cybersecurity Student</p>
-      <div class="hub-status">
-        <span class="dot-live" aria-hidden="true"></span>
-        <span>open to work</span>
-      </div>
+    <p class="hero-tag">Research · Analysis · Response</p>
+
+    <h1 class="hero-name">
+      METHINDU<br>
+      DAMSARA<span class="accent-stroke">.</span>
+    </h1>
+
+    <p class="hero-alias">Matt</p>
+
+    <p class="hero-descriptor">
+      Cyber Security <span class="sep">/</span> Networking
+    </p>
+
+    <p class="hero-sublabel">Student</p>
+
+    <div class="hero-ctas">
+      <a class="cta decrypt" href="about.html">
+        <span class="cta-label decrypt-text">About Me</span>
+        <span class="cta-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+      <a class="cta decrypt" href="background.html">
+        <span class="cta-label decrypt-text">Background</span>
+        <span class="cta-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+      <a class="cta decrypt" href="projects.html">
+        <span class="cta-label decrypt-text">Projects</span>
+        <span class="cta-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+      <a class="cta decrypt primary" href="contact.html">
+        <span class="cta-label decrypt-text">Contact Me</span>
+        <span class="cta-arrow" aria-hidden="true">&rarr;</span>
+      </a>
     </div>
 
-    <!-- 01 About -->
-    <a href="profile.html" class="topo-node" data-i="0">
-      <div class="node-card">
-        <span class="node-num">01</span>
-        <span class="node-name">About</span>
-        <span class="node-hint">profile</span>
-      </div>
-    </a>
+    <span class="hero-corner bl">
+      <span class="marker" aria-hidden="true"></span>
+      <span><span class="ci">SESSION / 03</span> · <span class="cv">Open</span></span>
+    </span>
+    <span class="hero-corner br">
+      <span class="marker" aria-hidden="true"></span>
+      <span><span class="ci">STATUS / 04</span> · <span class="cv">Student</span></span>
+    </span>
 
-    <!-- 02 Background -->
-    <a href="background.html" class="topo-node" data-i="1">
-      <div class="node-card">
-        <span class="node-num">02</span>
-        <span class="node-name">Background</span>
-        <span class="node-hint">education + career</span>
-      </div>
-    </a>
-
-    <!-- 03 Work -->
-    <a href="work.html" class="topo-node" data-i="2">
-      <div class="node-card">
-        <span class="node-num">03</span>
-        <span class="node-name">Work</span>
-        <span class="node-hint">projects + logs</span>
-      </div>
-    </a>
-
-    <!-- 04 Stack -->
-    <a href="stack.html" class="topo-node" data-i="3">
-      <div class="node-card">
-        <span class="node-num">04</span>
-        <span class="node-name">Stack</span>
-        <span class="node-hint">tools + skills</span>
-      </div>
-    </a>
-
-    <!-- 05 Contact -->
-    <a href="contact.html" class="topo-node" data-i="4">
-      <div class="node-card">
-        <span class="node-num">05</span>
-        <span class="node-name">Contact</span>
-        <span class="node-hint">reach out</span>
-      </div>
-    </a>
-
-  </div>
+  </main>
 
   <script src="script.js"></script>
 </body>

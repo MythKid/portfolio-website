@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Me · Methindu Damsara</title>
+  <script>if(localStorage.getItem('mdtheme')==='light')document.documentElement.setAttribute('data-theme','light');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <canvas id="bgCanvas" aria-hidden="true"></canvas>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-noise" aria-hidden="true"></div>
+  <canvas id="trailCanvas" aria-hidden="true"></canvas>
+
+  <header class="topbar" role="banner">
+    <a href="index.html" class="topbar-mark"><span class="dot" aria-hidden="true"></span>METHINDU<span class="mark-meta"> · NODE 01 / ABOUT</span></a>
+    <button class="theme-toggle decrypt" aria-label="Toggle light or dark theme">
+      <span class="tt-icon" aria-hidden="true"></span>
+      <span class="decrypt-text" data-theme-label>DARK</span>
+    </button>
+  </header>
+
+  <main class="page page-enter">
+
+    <div class="page-header">
+      <p class="page-eyebrow">01 / About Me</p>
+      <h1 class="page-title">About <span class="accent-stroke">Me</span><span class="end-dot">.</span></h1>
+      <p class="page-lede">
+        A short read on who I am, what I am studying, and where I sit in the
+        Cyber Security and Networking space at Unitec.
+      </p>
+    </div>
+
+    <div class="about-grid">
+
+      <div>
+        <section class="about-section">
+          <p class="about-section-label">Profile</p>
+          <p>
+            3rd year Bachelors student at Unitec Institute of Technology specializing in
+            Cyber Security and Networking. Practical experience in academic support,
+            student governance, and a strong interest in building secure, resilient
+            network environments.
+          </p>
+        </section>
+
+        <section class="about-section">
+          <p class="about-section-label">Student Ambassador</p>
+          <h2 class="about-section-title">Unitec Student Ambassador · 2025 Cohort</h2>
+          <p>
+            Selected as a Student Ambassador representing Unitec Institute of Technology.
+            Responsibilities include representing the institution at outreach events,
+            mentoring prospective students, and acting as a visible point of contact for
+            the student community.
+          </p>
+          <p>
+            The role involves strong communication, professionalism, and a commitment to
+            the values of the institution.
+          </p>
+        </section>
+      </div>
+
+      <aside class="photo-frame" aria-label="Profile image placeholder">
+        <span class="photo-corner tl" aria-hidden="true"></span>
+        <span class="photo-corner tr" aria-hidden="true"></span>
+        <span class="photo-corner bl" aria-hidden="true"></span>
+        <span class="photo-corner br" aria-hidden="true"></span>
+        <p class="photo-label">// PROFILE IMAGE</p>
+        <div class="photo-center">
+          <p class="photo-glyph">[ MD ]</p>
+          <p class="photo-caption">Photo Placeholder</p>
+        </div>
+        <p class="photo-meta">
+          <span class="accent">FRAME · 4:5</span>
+          <span>Awaiting upload</span>
+        </p>
+      </aside>
+
+    </div>
+
+    <nav class="page-nav" aria-label="Page navigation">
+      <a class="nav-link prev decrypt" href="index.html">
+        <span class="nav-arrow" aria-hidden="true">&larr;</span>
+        <span class="nav-label decrypt-text">Previous Page</span>
+      </a>
+      <a class="nav-link home decrypt" href="index.html">
+        <span class="nav-label decrypt-text">Home</span>
+      </a>
+      <a class="nav-link next decrypt" href="background.html">
+        <span class="nav-label decrypt-text">Next Page</span>
+        <span class="nav-arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </nav>
+
+  </main>
+
+  <footer class="foot">
+    <span>NODENULL <span class="accent">·</span> METHINDU DAMSARA</span>
+    <span>Auckland / NZ <span class="accent">·</span> UTC+12</span>
+    <span>&copy; 2026</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
