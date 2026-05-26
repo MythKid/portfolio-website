@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Methindu Damsara</title>
+  <meta name="description" content="Portfolio of Methindu Damsara — Networking and Cybersecurity Student, Auckland NZ." />
+  <!-- Prevent theme flash -->
+  <script>if(localStorage.getItem('theme')==='light')document.documentElement.setAttribute('data-theme','light');</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="page-home">
+
+  <div class="grain" aria-hidden="true"></div>
+  <div id="neon-tracer" aria-hidden="true"></div>
+
+  <!-- Top-right: clock + theme toggle -->
+  <div id="home-topbar">
+    <span class="home-clock" id="clock">--:--</span>
+    <button id="theme-toggle" aria-label="Toggle light/dark mode">◐</button>
+  </div>
+
+  <!-- Portfolio Topology -->
+  <div id="topo-wrap">
+
+    <!-- SVG lines layer (drawn by JS) -->
+    <svg id="topo-svg" aria-hidden="true"></svg>
+
+    <!-- Central identity hub -->
+    <div id="topo-hub">
+      <span class="hub-name-main" id="type-main" aria-label="Methindu Damsara"></span>
+      <span class="hub-name-pref" id="type-pref" aria-label="Matt"></span>
+      <p class="hub-role">Networking and Cybersecurity Student</p>
+      <div class="hub-status">
+        <span class="dot-live" aria-hidden="true"></span>
+        <span>open to work</span>
+      </div>
+    </div>
+
+    <!-- 01 About -->
+    <a href="profile.html" class="topo-node" data-i="0">
+      <div class="node-card">
+        <span class="node-num">01</span>
+        <span class="node-name">About</span>
+        <span class="node-hint">profile</span>
+      </div>
+    </a>
+
+    <!-- 02 Background -->
+    <a href="background.html" class="topo-node" data-i="1">
+      <div class="node-card">
+        <span class="node-num">02</span>
+        <span class="node-name">Background</span>
+        <span class="node-hint">education + career</span>
+      </div>
+    </a>
+
+    <!-- 03 Work -->
+    <a href="work.html" class="topo-node" data-i="2">
+      <div class="node-card">
+        <span class="node-num">03</span>
+        <span class="node-name">Work</span>
+        <span class="node-hint">projects + logs</span>
+      </div>
+    </a>
+
+    <!-- 04 Stack -->
+    <a href="stack.html" class="topo-node" data-i="3">
+      <div class="node-card">
+        <span class="node-num">04</span>
+        <span class="node-name">Stack</span>
+        <span class="node-hint">tools + skills</span>
+      </div>
+    </a>
+
+    <!-- 05 Contact -->
+    <a href="contact.html" class="topo-node" data-i="4">
+      <div class="node-card">
+        <span class="node-num">05</span>
+        <span class="node-name">Contact</span>
+        <span class="node-hint">reach out</span>
+      </div>
+    </a>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
