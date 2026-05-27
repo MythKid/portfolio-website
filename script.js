@@ -118,8 +118,8 @@
         nodes.push({
           x:  Math.random() * W,
           y:  Math.random() * H,
-          vx: (Math.random() - 0.5) * 0.18,
-          vy: (Math.random() - 0.5) * 0.18,
+          vx: (Math.random() - 0.5) * 0.10,
+          vy: (Math.random() - 0.5) * 0.10,
         });
       }
     }
