@@ -2,6 +2,14 @@
   'use strict';
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+
+  function safeGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+  function safeSet(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* ignore */ }
+  }
 
   function accentRGB() {
     return document.documentElement.getAttribute('data-theme') === 'light'
@@ -12,7 +20,7 @@
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      THEME · persist + toggle
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const stored = localStorage.getItem('mdtheme');
+  const stored = safeGet('mdtheme');
   if (stored === 'light') document.documentElement.setAttribute('data-theme', 'light');
 
   function applyThemeLabel() {
@@ -29,20 +37,35 @@
       const next = isLight ? 'dark' : 'light';
       if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
       else                  document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('mdtheme', next);
+      safeSet('mdtheme', next);
       applyThemeLabel();
     });
   });
 
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     TEXT DECRYPTION · 3x slower scramble on hover/focus
+     TEXT DECRYPTION · per-character span swap (no innerHTML thrash)
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const SCRAMBLE_CHARS = '!<>-_\\/[]{}=+*^?#$%&¥§Ω∆◊';
 
-  function scramble(el) {
-    if (!el || reduceMotion) return;
+  function prepareDecrypt(el) {
     if (!el.dataset.decryptText) el.dataset.decryptText = el.textContent;
     const original = el.dataset.decryptText;
+    el.textContent = '';
+    const spans = [];
+    for (let i = 0; i < original.length; i++) {
+      const s = document.createElement('span');
+      s.textContent = original[i];
+      el.appendChild(s);
+      spans.push(s);
+    }
+    el._decryptSpans = spans;
+  }
+
+  function scramble(el) {
+    if (!el || reduceMotion) return;
+    if (!el._decryptSpans) prepareDecrypt(el);
+    const original = el.dataset.decryptText;
+    const spans = el._decryptSpans;
 
     if (el._scrambleRAF) cancelAnimationFrame(el._scrambleRAF);
 
@@ -56,28 +79,30 @@
 
     let frame = 0;
     function update() {
-      let out = '';
       let done = 0;
       for (let i = 0; i < queue.length; i++) {
         const q = queue[i];
+        const span = spans[i];
+        if (!span) { done++; continue; }
         if (frame >= q.end) {
-          out += q.ch;
+          if (span.textContent !== q.ch) span.textContent = q.ch;
+          if (span.className) span.className = '';
           done++;
         } else if (frame >= q.start && q.ch !== ' ') {
           if (!q.current || Math.random() < 0.18) {
             q.current = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+            span.textContent = q.current;
           }
-          out += '<span class="decrypt-char">' + q.current + '</span>';
-        } else {
-          out += q.ch === ' ' ? ' ' : q.ch;
+          if (span.className !== 'decrypt-char') span.className = 'decrypt-char';
+        } else if (span.textContent !== q.ch) {
+          span.textContent = q.ch;
+          if (span.className) span.className = '';
         }
       }
-      el.innerHTML = out;
       if (done < queue.length) {
         frame++;
         el._scrambleRAF = requestAnimationFrame(update);
       } else {
-        el.textContent = original;
         el._scrambleRAF = null;
       }
     }
@@ -86,21 +111,26 @@
 
   function bindDecrypt(host) {
     const target = host.querySelector('.decrypt-text') || host;
-    if (!target.dataset.decryptText) target.dataset.decryptText = target.textContent;
+    prepareDecrypt(target);
     host.addEventListener('mouseenter', () => scramble(target));
     host.addEventListener('focus',      () => scramble(target));
+    if (isTouch) {
+      host.addEventListener('touchstart', () => scramble(target), { passive: true });
+    }
   }
 
   document.querySelectorAll('.decrypt').forEach(bindDecrypt);
 
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     BACKGROUND · subtle node network canvas (slightly more visible)
+     BACKGROUND · subtle node network canvas
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const bgCanvas = document.getElementById('bgCanvas');
   if (bgCanvas && !reduceMotion) {
     const ctx = bgCanvas.getContext('2d');
     let W = 0, H = 0, nodes = [];
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let bgRAF = null;
+    let bgRunning = false;
 
     function resize() {
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -112,7 +142,9 @@
       bgCanvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const count = Math.max(28, Math.min(58, Math.floor((W * H) / 32000)));
+      const density = isTouch ? 48000 : 32000;
+      const cap = isTouch ? 36 : 58;
+      const count = Math.max(20, Math.min(cap, Math.floor((W * H) / density)));
       nodes = [];
       for (let i = 0; i < count; i++) {
         nodes.push({
@@ -162,19 +194,38 @@
         ctx.fill();
       }
 
-      requestAnimationFrame(frame);
+      if (bgRunning) bgRAF = requestAnimationFrame(frame);
     }
-    frame();
+
+    function startBg() {
+      if (bgRunning) return;
+      bgRunning = true;
+      bgRAF = requestAnimationFrame(frame);
+    }
+    function stopBg() {
+      bgRunning = false;
+      if (bgRAF) cancelAnimationFrame(bgRAF);
+      bgRAF = null;
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopBg();
+      else startBg();
+    });
+
+    startBg();
   }
 
   /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     MOUSE DATA TRAIL · segmented digital particles
+     MOUSE DATA TRAIL · desktop only (skipped on touch devices)
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const trailCanvas = document.getElementById('trailCanvas');
-  if (trailCanvas && !reduceMotion) {
+  if (trailCanvas && !reduceMotion && !isTouch) {
     const tctx = trailCanvas.getContext('2d');
     let TW = 0, TH = 0;
     let tdpr = Math.min(window.devicePixelRatio || 1, 2);
+    let trailRAF = null;
+    let trailRunning = false;
 
     function tresize() {
       tdpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -260,9 +311,26 @@
         tctx.fillRect(lastX - 1.5, lastY - 1.5, 3, 3);
       }
 
-      requestAnimationFrame(tframe);
+      if (trailRunning) trailRAF = requestAnimationFrame(tframe);
     }
-    requestAnimationFrame(tframe);
+
+    function startTrail() {
+      if (trailRunning) return;
+      trailRunning = true;
+      trailRAF = requestAnimationFrame(tframe);
+    }
+    function stopTrail() {
+      trailRunning = false;
+      if (trailRAF) cancelAnimationFrame(trailRAF);
+      trailRAF = null;
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopTrail();
+      else startTrail();
+    });
+
+    startTrail();
   }
 
 })();

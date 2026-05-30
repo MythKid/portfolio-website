@@ -678,77 +678,63 @@ html[data-theme="light"] .theme-toggle .tt-icon {
 }
 .about-section p + p { margin-top: 10px; }
 
-.photo-frame {
+/* Portrait module: treat the headshot as a designed UI component,
+   not a raw photo. Layered overlay + hairline border + depth shadow. */
+.portrait-module {
   position: sticky;
-  top: calc(var(--topbar-h) + 24px);
-  aspect-ratio: 4 / 5;
-  border: 1px solid var(--line);
-  background:
-    linear-gradient(135deg, var(--accent-soft) 0%, transparent 60%),
-    var(--bg-elev);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 18px;
-  overflow: hidden;
+  top: calc(var(--topbar-h) + 32px);
+  width: 100%;
+  max-width: 420px;
+  justify-self: end;
 }
-.photo-corner {
-  position: absolute;
-  width: 20px; height: 20px;
-  border: 1px solid var(--accent);
-}
-.photo-corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-.photo-corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-.photo-corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-.photo-corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
-
-.photo-label {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--accent);
+.portrait-frame {
   position: relative;
-  z-index: 2;
+  margin: 0;
+  aspect-ratio: 4 / 5;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--bg-elev);
+  isolation: isolate;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 30px 70px -28px rgba(0, 0, 0, 0.70),
+    0 12px 32px -18px rgba(0, 0, 0, 0.45);
 }
-.photo-center {
+.portrait-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+  filter: saturate(1.04) contrast(1.05);
+}
+.portrait-overlay {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 38%),
+    linear-gradient(0deg, rgba(6, 7, 10, 0.55) 0%, rgba(6, 7, 10, 0) 50%),
+    linear-gradient(180deg, rgba(107, 142, 255, 0.06) 0%, rgba(107, 142, 255, 0) 35%);
 }
-.photo-glyph {
-  font-family: var(--font-mono);
-  font-size: 2rem;
-  color: var(--text-mute);
-  letter-spacing: 0.1em;
+.portrait-hairline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(107, 142, 255, 0.05);
 }
-.photo-caption {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  color: var(--text-mute);
+
+html[data-theme="light"] .portrait-overlay {
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 38%),
+    linear-gradient(0deg, rgba(13, 16, 24, 0.18) 0%, rgba(13, 16, 24, 0) 50%);
 }
-.photo-meta {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--text-mute);
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  text-align: right;
-  align-self: flex-end;
+html[data-theme="light"] .portrait-hairline {
+  border-color: rgba(13, 16, 24, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(45, 82, 209, 0.06);
 }
-.photo-meta .accent { color: var(--accent); }
 
 /* ============================================================
    PROJECTS
@@ -906,10 +892,13 @@ html[data-theme="light"] .theme-toggle .tt-icon {
    RESPONSIVE
    ============================================================ */
 @media (max-width: 980px) {
-  .about-grid { grid-template-columns: 1fr; gap: 24px; }
-  /* Keep relative (not static) so absolute children stay contained — without this
-     .photo-center with inset:0 escapes and covers main.page, blocking nav clicks. */
-  .photo-frame { position: relative; top: auto; aspect-ratio: 4 / 3; max-width: 460px; }
+  .about-grid { grid-template-columns: 1fr; gap: 32px; }
+  .portrait-module {
+    position: relative;
+    top: auto;
+    justify-self: start;
+    max-width: 320px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -934,10 +923,33 @@ html[data-theme="light"] .theme-toggle .tt-icon {
 
 @media (max-width: 480px) {
   body.is-home { overflow: auto; height: auto; }
-  .hero { height: auto; min-height: 100vh; padding-top: calc(var(--topbar-h) + 60px); padding-bottom: 60px; }
+  .hero { height: auto; min-height: 100dvh; padding-top: calc(var(--topbar-h) + 60px); padding-bottom: 60px; }
   .hero-corner { font-size: 0.5rem; }
   .row { grid-template-columns: 1fr; }
   .row-meta { text-align: left; }
+}
+
+/* Short viewports (landscape phones, split-screen tablets):
+   release the home page scroll lock so corner labels and CTAs are reachable. */
+@media (max-height: 600px) {
+  body.is-home { overflow: auto; height: auto; }
+  .hero {
+    height: auto;
+    min-height: 100dvh;
+    padding-top: calc(var(--topbar-h) + 56px);
+    padding-bottom: 56px;
+  }
+  .hero-corner.tl, .hero-corner.tr { top: calc(var(--topbar-h) + 8px); }
+  .hero-corner.bl, .hero-corner.br { bottom: 14px; }
+}
+
+/* Keyboard focus rings for non-CTA interactive elements. */
+.theme-toggle:focus-visible,
+.channel:focus-visible,
+.nav-link:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-glow);
 }
 
 @media (prefers-reduced-motion: reduce) {
