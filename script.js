@@ -1,336 +1,242 @@
+/* ============================================================
+   Methindu Damsara portfolio. Premium minimal.
+   Theme toggle, cinematic scroll reveals, staggered hero
+   entrance, topbar scroll state, soft pointer parallax glow.
+   No em dashes anywhere in this file.
+   ============================================================ */
+
 (function () {
   'use strict';
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0;
+  const root = document.documentElement;
 
-  function safeGet(key) {
-    try { return localStorage.getItem(key); } catch (e) { return null; }
-  }
-  function safeSet(key, value) {
-    try { localStorage.setItem(key, value); } catch (e) { /* ignore */ }
-  }
+  // Run each module in isolation so one failure can never abort the others
+  // (in particular, never leaves reveal/entrance content stuck hidden).
+  function run(fn) { try { fn(); } catch (e) { /* keep going */ } }
 
-  function accentRGB() {
-    return document.documentElement.getAttribute('data-theme') === 'light'
-      ? '45, 82, 209'
-      : '107, 142, 255';
-  }
-
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     THEME · persist + toggle
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const stored = safeGet('mdtheme');
-  if (stored === 'light') document.documentElement.setAttribute('data-theme', 'light');
-
-  function applyThemeLabel() {
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    document.querySelectorAll('[data-theme-label]').forEach((el) => {
-      el.textContent = isLight ? 'LIGHT' : 'DARK';
-    });
-  }
-  applyThemeLabel();
-
-  document.querySelectorAll('.theme-toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-      const next = isLight ? 'dark' : 'light';
-      if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
-      else                  document.documentElement.removeAttribute('data-theme');
-      safeSet('mdtheme', next);
-      applyThemeLabel();
+  /* ---------- hero entrance (runs first, content critical) ---------- */
+  run(function entrance() {
+    requestAnimationFrame(function () {
+      document.body.classList.add('is-loaded');
     });
   });
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     TEXT DECRYPTION · per-character span swap (no innerHTML thrash)
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const SCRAMBLE_CHARS = '!<>-_\\/[]{}=+*^?#$%&¥§Ω∆◊';
-
-  function prepareDecrypt(el) {
-    if (!el.dataset.decryptText) el.dataset.decryptText = el.textContent;
-    const original = el.dataset.decryptText;
-    el.textContent = '';
-    const spans = [];
-    for (let i = 0; i < original.length; i++) {
-      const s = document.createElement('span');
-      s.textContent = original[i];
-      el.appendChild(s);
-      spans.push(s);
+  /* ---------- cinematic scroll reveal (content critical) ---------- */
+  run(function reveal() {
+    const els = document.querySelectorAll('.reveal');
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      els.forEach(function (el) { el.classList.add('is-visible'); });
+      return;
     }
-    el._decryptSpans = spans;
-  }
-
-  function scramble(el) {
-    if (!el || reduceMotion) return;
-    if (!el._decryptSpans) prepareDecrypt(el);
-    const original = el.dataset.decryptText;
-    const spans = el._decryptSpans;
-
-    if (el._scrambleRAF) cancelAnimationFrame(el._scrambleRAF);
-
-    const queue = [];
-    for (let i = 0; i < original.length; i++) {
-      const ch = original[i];
-      const start = Math.floor(Math.random() * 8) * 3;
-      const end = start + (6 + Math.floor(Math.random() * 12)) * 3;
-      queue.push({ ch, start, end, current: '' });
-    }
-
-    let frame = 0;
-    function update() {
-      let done = 0;
-      for (let i = 0; i < queue.length; i++) {
-        const q = queue[i];
-        const span = spans[i];
-        if (!span) { done++; continue; }
-        if (frame >= q.end) {
-          if (span.textContent !== q.ch) span.textContent = q.ch;
-          if (span.className) span.className = '';
-          done++;
-        } else if (frame >= q.start && q.ch !== ' ') {
-          if (!q.current || Math.random() < 0.18) {
-            q.current = SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-            span.textContent = q.current;
-          }
-          if (span.className !== 'decrypt-char') span.className = 'decrypt-char';
-        } else if (span.textContent !== q.ch) {
-          span.textContent = q.ch;
-          if (span.className) span.className = '';
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
         }
-      }
-      if (done < queue.length) {
-        frame++;
-        el._scrambleRAF = requestAnimationFrame(update);
-      } else {
-        el._scrambleRAF = null;
-      }
+      });
+    }, { threshold: 0.16, rootMargin: '0px 0px -10% 0px' });
+    els.forEach(function (el) { io.observe(el); });
+  });
+
+  /* ---------- theme toggle + persistence ---------- */
+  run(function theme() {
+    const meta = document.querySelector('meta[name="theme-color"][data-dynamic]');
+    function applyMeta() {
+      if (meta) meta.setAttribute('content', root.getAttribute('data-theme') === 'light' ? '#f6f7f9' : '#08090c');
+    }
+    applyMeta();
+    const btn = document.querySelector('.theme-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('mdtheme', next); } catch (e) {}
+      applyMeta();
+    });
+  });
+
+  /* ---------- topbar scroll state ---------- */
+  run(function topbar() {
+    const bar = document.querySelector('.topbar');
+    if (!bar) return;
+    let ticking = false;
+    function update() {
+      bar.classList.toggle('scrolled', window.scrollY > 8);
+      ticking = false;
     }
     update();
-  }
+    window.addEventListener('scroll', function () {
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+  });
 
-  function bindDecrypt(host) {
-    const target = host.querySelector('.decrypt-text') || host;
-    prepareDecrypt(target);
-    host.addEventListener('mouseenter', () => scramble(target));
-    host.addEventListener('focus',      () => scramble(target));
-    if (isTouch) {
-      host.addEventListener('touchstart', () => scramble(target), { passive: true });
+  /* ---------- pointer parallax on ambient glow ---------- */
+  run(function parallax() {
+    const glow = document.querySelector('.glow');
+    if (!glow || isTouch || reduceMotion) return;
+    let tx = 50, ty = 18, cx = 50, cy = 18, raf = 0;
+    window.addEventListener('mousemove', function (e) {
+      tx = 50 + (e.clientX / window.innerWidth - 0.5) * 16;
+      ty = 18 + (e.clientY / window.innerHeight - 0.5) * 16;
+      if (!raf) raf = requestAnimationFrame(loop);
+    });
+    function loop() {
+      cx += (tx - cx) * 0.06;
+      cy += (ty - cy) * 0.06;
+      glow.style.setProperty('--gx', cx.toFixed(2) + '%');
+      glow.style.setProperty('--gy', cy.toFixed(2) + '%');
+      if (Math.abs(tx - cx) > 0.05 || Math.abs(ty - cy) > 0.05) {
+        raf = requestAnimationFrame(loop);
+      } else {
+        raf = 0;
+      }
     }
-  }
+  });
 
-  document.querySelectorAll('.decrypt').forEach(bindDecrypt);
+  /* ---------- mobile hamburger nav ---------- */
+  run(function mobileNav() {
+    const btn = document.querySelector('.nav-toggle');
+    const nav = document.querySelector('.nav');
+    if (!btn || !nav) return;
+    function close() {
+      nav.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', 'Open menu');
+    }
+    function open() {
+      nav.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.setAttribute('aria-label', 'Close menu');
+    }
+    btn.addEventListener('click', function () {
+      if (nav.classList.contains('open')) close(); else open();
+    });
+    nav.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', close); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    window.addEventListener('resize', function () { if (window.innerWidth > 860) close(); });
+  });
 
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     BACKGROUND · subtle node network canvas
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const bgCanvas = document.getElementById('bgCanvas');
-  if (bgCanvas && !reduceMotion) {
-    const ctx = bgCanvas.getContext('2d');
-    let W = 0, H = 0, nodes = [];
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
-    let bgRAF = null;
-    let bgRunning = false;
+  /* ---------- interactive constellation ---------- */
+  run(function constellation() {
+    if (reduceMotion) return;
 
-    function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      W = window.innerWidth;
-      H = window.innerHeight;
-      bgCanvas.width  = W * dpr;
-      bgCanvas.height = H * dpr;
-      bgCanvas.style.width  = W + 'px';
-      bgCanvas.style.height = H + 'px';
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const cv = document.createElement('canvas');
+    cv.setAttribute('aria-hidden', 'true');
+    cv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;';
+    document.body.appendChild(cv);
+    const ctx = cv.getContext('2d');
 
-      const density = isTouch ? 48000 : 32000;
-      const cap = isTouch ? 36 : 58;
-      const count = Math.max(20, Math.min(cap, Math.floor((W * H) / density)));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const LINK = 168;          // max distance two nodes link across
+    const CURSOR_LINK = 200;   // distance the cursor links to nodes
+    let w = 0, h = 0, nodes = [], hidden = false;
+    let mx = -9999, my = -9999;
+
+    function accent() {
+      const v = getComputedStyle(root).getPropertyValue('--accent-rgb').trim();
+      return v || '52, 225, 196';
+    }
+
+    function seed() {
+      const count = Math.min(Math.round((w * h) / 30000), 26);
       nodes = [];
       for (let i = 0; i < count; i++) {
         nodes.push({
-          x:  Math.random() * W,
-          y:  Math.random() * H,
-          vx: (Math.random() - 0.5) * 0.10,
-          vy: (Math.random() - 0.5) * 0.10,
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.22,
+          vy: (Math.random() - 0.5) * 0.22,
+          r: 1.3 + Math.random() * 0.9,
+          tw: Math.random() * Math.PI * 2   // twinkle phase
         });
       }
     }
+
+    function resize() {
+      w = window.innerWidth;
+      h = window.innerHeight;
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seed();
+    }
     resize();
-    window.addEventListener('resize', resize, { passive: true });
+    window.addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', function () { hidden = document.hidden; });
 
-    const LINK_DIST = 200;
+    if (!isTouch) {
+      window.addEventListener('mousemove', function (e) { mx = e.clientX; my = e.clientY; });
+      window.addEventListener('mouseleave', function () { mx = -9999; my = -9999; });
+    }
 
+    let t = 0;
     function frame() {
-      ctx.clearRect(0, 0, W, H);
-      const col = accentRGB();
+      requestAnimationFrame(frame);
+      if (hidden || !w) return;
+      t += 0.016;
+      ctx.clearRect(0, 0, w, h);
+      const rgb = accent();
+      // teal reads fainter on the light background, so boost opacity there
+      const k = root.getAttribute('data-theme') === 'light' ? 1.7 : 1;
 
-      for (const n of nodes) {
-        n.x += n.vx; n.y += n.vy;
-        if (n.x < 0 || n.x > W) n.vx *= -1;
-        if (n.y < 0 || n.y > H) n.vy *= -1;
+      // move
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < -6) n.x = w + 6; else if (n.x > w + 6) n.x = -6;
+        if (n.y < -6) n.y = h + 6; else if (n.y > h + 6) n.y = -6;
       }
 
+      // links between nearby nodes
       ctx.lineWidth = 1;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          const dx = nodes[i].x - nodes[j].x;
-          const dy = nodes[i].y - nodes[j].y;
-          const d  = Math.sqrt(dx * dx + dy * dy);
-          if (d < LINK_DIST) {
-            const a = (1 - d / LINK_DIST) * 0.24;
-            ctx.strokeStyle = 'rgba(' + col + ', ' + a.toFixed(3) + ')';
+          const a = nodes[i], b = nodes[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < LINK) {
+            const o = (1 - dist / LINK) * 0.16 * k;
+            ctx.strokeStyle = 'rgba(' + rgb + ',' + o.toFixed(3) + ')';
             ctx.beginPath();
-            ctx.moveTo(nodes[i].x, nodes[i].y);
-            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
             ctx.stroke();
           }
         }
       }
 
-      ctx.fillStyle = 'rgba(' + col + ', 0.72)';
-      for (const n of nodes) {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (bgRunning) bgRAF = requestAnimationFrame(frame);
-    }
-
-    function startBg() {
-      if (bgRunning) return;
-      bgRunning = true;
-      bgRAF = requestAnimationFrame(frame);
-    }
-    function stopBg() {
-      bgRunning = false;
-      if (bgRAF) cancelAnimationFrame(bgRAF);
-      bgRAF = null;
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) stopBg();
-      else startBg();
-    });
-
-    startBg();
-  }
-
-  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     MOUSE DATA TRAIL · desktop only (skipped on touch devices)
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-  const trailCanvas = document.getElementById('trailCanvas');
-  if (trailCanvas && !reduceMotion && !isTouch) {
-    const tctx = trailCanvas.getContext('2d');
-    let TW = 0, TH = 0;
-    let tdpr = Math.min(window.devicePixelRatio || 1, 2);
-    let trailRAF = null;
-    let trailRunning = false;
-
-    function tresize() {
-      tdpr = Math.min(window.devicePixelRatio || 1, 2);
-      TW = window.innerWidth;
-      TH = window.innerHeight;
-      trailCanvas.width  = TW * tdpr;
-      trailCanvas.height = TH * tdpr;
-      trailCanvas.style.width  = TW + 'px';
-      trailCanvas.style.height = TH + 'px';
-      tctx.setTransform(tdpr, 0, 0, tdpr, 0, 0);
-    }
-    tresize();
-    window.addEventListener('resize', tresize, { passive: true });
-
-    const trail = [];
-    const particles = [];
-    const MAX_TRAIL = 18;
-    const MAX_PARTICLES = 90;
-
-    let lastX = -1000, lastY = -1000;
-    let hasMouse = false;
-
-    window.addEventListener('mousemove', (e) => {
-      const x = e.clientX, y = e.clientY;
-      if (!hasMouse) { lastX = x; lastY = y; hasMouse = true; return; }
-      const dx = x - lastX, dy = y - lastY;
-      const d = Math.hypot(dx, dy);
-      if (d < 2) return;
-      lastX = x; lastY = y;
-
-      trail.push({ x, y, life: 1 });
-      if (trail.length > MAX_TRAIL) trail.shift();
-
-      const count = Math.min(2, Math.max(1, Math.floor(d / 16)));
-      for (let i = 0; i < count; i++) {
-        if (particles.length >= MAX_PARTICLES) particles.shift();
-        particles.push({
-          x: x + (Math.random() - 0.5) * 5,
-          y: y + (Math.random() - 0.5) * 5,
-          vx: (Math.random() - 0.5) * 0.35,
-          vy: (Math.random() - 0.5) * 0.35 + 0.04,
-          size: Math.random() < 0.22 ? 2 : 1,
-          life: 1,
-          decay: 0.022 + Math.random() * 0.022,
-        });
-      }
-    }, { passive: true });
-
-    window.addEventListener('mouseleave', () => { hasMouse = false; });
-
-    function tframe() {
-      tctx.clearRect(0, 0, TW, TH);
-      const col = accentRGB();
-
-      if (trail.length > 1) {
-        tctx.lineWidth = 1;
-        for (let i = 1; i < trail.length; i++) {
-          const a = trail[i].life * 0.32;
-          tctx.strokeStyle = 'rgba(' + col + ', ' + a.toFixed(3) + ')';
-          tctx.beginPath();
-          tctx.moveTo(trail[i - 1].x, trail[i - 1].y);
-          tctx.lineTo(trail[i].x, trail[i].y);
-          tctx.stroke();
+      // links from cursor to nearby nodes (interactive)
+      if (mx > -9998) {
+        for (let i = 0; i < nodes.length; i++) {
+          const n = nodes[i];
+          const dx = n.x - mx, dy = n.y - my;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < CURSOR_LINK) {
+            const o = (1 - dist / CURSOR_LINK) * 0.3 * k;
+            ctx.strokeStyle = 'rgba(' + rgb + ',' + o.toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.moveTo(n.x, n.y);
+            ctx.lineTo(mx, my);
+            ctx.stroke();
+          }
         }
       }
-      for (let i = trail.length - 1; i >= 0; i--) {
-        trail[i].life -= 0.07;
-        if (trail[i].life <= 0) trail.splice(i, 1);
+
+      // nodes (with gentle twinkle)
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        const a = Math.min(0.9, (0.4 + 0.25 * Math.sin(t + n.tw)) * k);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(' + rgb + ',' + a.toFixed(3) + ')';
+        ctx.fill();
       }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx; p.y += p.vy;
-        p.life -= p.decay;
-        if (p.life <= 0) { particles.splice(i, 1); continue; }
-        const a = Math.max(0, p.life * 0.78);
-        tctx.fillStyle = 'rgba(' + col + ', ' + a.toFixed(3) + ')';
-        tctx.fillRect(p.x | 0, p.y | 0, p.size, p.size);
-      }
-
-      if (hasMouse) {
-        tctx.fillStyle = 'rgba(' + col + ', 0.92)';
-        tctx.fillRect(lastX - 1.5, lastY - 1.5, 3, 3);
-      }
-
-      if (trailRunning) trailRAF = requestAnimationFrame(tframe);
     }
-
-    function startTrail() {
-      if (trailRunning) return;
-      trailRunning = true;
-      trailRAF = requestAnimationFrame(tframe);
-    }
-    function stopTrail() {
-      trailRunning = false;
-      if (trailRAF) cancelAnimationFrame(trailRAF);
-      trailRAF = null;
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) stopTrail();
-      else startTrail();
-    });
-
-    startTrail();
-  }
+    requestAnimationFrame(frame);
+  });
 
 })();
